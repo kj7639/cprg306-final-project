@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from './_utils/auth-context';
 
 export default function HomePage() {
-  const { user } = useAuth() || {};
+  const { user, logOut } = useAuth() || {};
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -38,12 +38,32 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="flex gap-4 items-center">
-          <Link href="/signin" className="text-sm hover:underline">
-            Sign in
-          </Link>
-          <Link href="/signup" className="text-sm hover:underline">
-            Sign up
-          </Link>
+          {user ? (
+            <>
+              <p className="text-sm text-gray-600">Hello, {user.displayName || user.email}</p>
+              <button
+                onClick={async () => {
+                  try {
+                    await logOut();
+                  } catch (err) {
+                    console.error('Logout error', err);
+                  }
+                }}
+                className="text-sm text-cyan-600 hover:underline"
+              >
+                Log Out
+              </button>
+            </>
+          ) : (
+            <>
+            <Link href="/signin" className="text-sm text-cyan-600 hover:underline">
+              Sign In
+            </Link>
+            <Link href="/signup" className="text-sm text-cyan-600 hover:underline">
+              Sign Up
+            </Link>
+            </>
+          )}
         </div>
       </header>
 
