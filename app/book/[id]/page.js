@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../_utils/auth-context';
 import { useParams } from 'next/navigation';
-
 import {
   collection,
   addDoc,
@@ -12,10 +11,7 @@ import {
   orderBy,
   onSnapshot,
   Timestamp,
-  doc,
-  setDoc,
 } from 'firebase/firestore';
-
 import { db } from '../../_utils/firebase';
 
 export default function BookDetailsPage() {
@@ -48,34 +44,21 @@ export default function BookDetailsPage() {
     fetchBook();
   }, [bookId]);
 
-  // Ensure parent document exists and listen to reviews
+  // Listen to reviews
   useEffect(() => {
     if (!bookId) return;
 
-    const setupAndListen = async () => {
-      // Ensure parent doc exists
-      const parentRef = doc(db, 'reviews', String(bookId));
-      await setDoc(parentRef, { exists: true }, { merge: true });
+    const q = query(
+      collection(db, 'reviews', String(bookId), 'reviewDocs'),
+      orderBy('timestamp', 'desc')
+    );
 
-      // Listen to subcollection
-      const q = query(
-        collection(db, 'reviews', String(bookId), 'reviewDocs'),
-        orderBy('timestamp', 'desc')
-      );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const revs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setReviews(revs);
+    });
 
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const revs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setReviews(revs);
-      });
-
-      return unsubscribe;
-    };
-
-    const unsubscribePromise = setupAndListen();
-
-    return () => {
-      unsubscribePromise.then(unsub => unsub && unsub());
-    };
+    return () => unsubscribe();
   }, [bookId]);
 
   // Add review to Firestore
@@ -104,22 +87,14 @@ export default function BookDetailsPage() {
     <div className="p-6 max-w-4xl mx-auto">
       <header className="w-full border-b py-4 px-6 flex items-center justify-between">
         <div>
-          <Link href="/" className="font-bold text-lg">
-            Back
-          </Link>
+          <Link href="/" className="font-bold text-lg">Back</Link>
         </div>
         <div className="flex gap-4 items-center">
           {user ? (
             <>
               <p className="text-sm text-gray-600">Hello, {user.displayName || user.email}</p>
               <button
-                onClick={async () => {
-                  try {
-                    await logOut();
-                  } catch (err) {
-                    console.error('Logout error', err);
-                  }
-                }}
+                onClick={async () => { try { await logOut(); } catch (err) { console.error(err); } }}
                 className="text-sm text-cyan-600 hover:underline"
               >
                 Log Out
@@ -127,12 +102,8 @@ export default function BookDetailsPage() {
             </>
           ) : (
             <>
-              <Link href="/signin" className="text-sm text-cyan-600 hover:underline">
-                Sign In
-              </Link>
-              <Link href="/signup" className="text-sm text-cyan-600 hover:underline">
-                Sign Up
-              </Link>
+              <Link href="/signin" className="text-sm text-cyan-600 hover:underline">Sign In</Link>
+              <Link href="/signup" className="text-sm text-cyan-600 hover:underline">Sign Up</Link>
             </>
           )}
         </div>
@@ -144,32 +115,11 @@ export default function BookDetailsPage() {
       <p className="text-gray-600 mb-2">
         <strong>Authors:</strong> {(info.authors || []).join(', ')}
       </p>
-
-      {info.publishedDate && (
-        <p className="text-gray-600 mb-2">
-          <strong>Published:</strong> {info.publishedDate}
-        </p>
-      )}
-
-      {info.publisher && (
-        <p className="text-gray-600 mb-2">
-          <strong>Publisher:</strong> {info.publisher}
-        </p>
-      )}
-
+      {info.publishedDate && <p className="text-gray-600 mb-2"><strong>Published:</strong> {info.publishedDate}</p>}
+      {info.publisher && <p className="text-gray-600 mb-2"><strong>Publisher:</strong> {info.publisher}</p>}
       {info.description && <p className="mt-4">{info.description}</p>}
-
-      {info.categories && (
-        <p className="mt-2 text-gray-600">
-          <strong>Categories:</strong> {info.categories.join(', ')}
-        </p>
-      )}
-
-      {info.pageCount && (
-        <p className="mt-2 text-gray-600">
-          <strong>Pages:</strong> {info.pageCount}
-        </p>
-      )}
+      {info.categories && <p className="mt-2 text-gray-600"><strong>Categories:</strong> {info.categories.join(', ')}</p>}
+      {info.pageCount && <p className="mt-2 text-gray-600"><strong>Pages:</strong> {info.pageCount}</p>}
 
       {/* Review Section */}
       <section className="mt-6">
