@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from './_utils/auth-context';
 
+import Searchbar from './components/searchbar';
+
 export default function HomePage() {
   const { user, logOut } = useAuth() || {};
   const [books, setBooks] = useState([]);
@@ -37,6 +39,7 @@ export default function HomePage() {
             Booksio
           </Link>
         </div>
+        <Searchbar/>
         <div className="flex gap-4 items-center">
           {user ? (
             <>
