@@ -12,7 +12,7 @@ export default function Searchbar(){
 
     return(
         <div>
-            <input value={searchTerm} onChange={searchChange} placeholder="Search for books" className="px-1 border border-white text-white"></input>
+            <input value={searchTerm} onChange={searchChange} placeholder="Search for books" className="px-1 border w-100 rounded-md"></input>
             <Link href={`../results/${searchTerm}`} className="px-2 py-1 mx-3 bg-cyan-600">Search</Link>
         </div>
     )
